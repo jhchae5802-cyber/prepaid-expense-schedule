@@ -3,13 +3,16 @@
 실행:  python app.py   →  브라우저에서 http://127.0.0.1:5055
 원자료 엑셀을 올리고 기준일을 고르면 명세서를 만들고, 검증 결과를 화면에 보여 주며, 엑셀로 내려받을 수 있다.
 """
-import datetime as dt, json, os, re, shutil, time, uuid, webbrowser, threading
+import base64, datetime as dt, json, os, re, shutil, time, uuid, webbrowser, threading
 from flask import Flask, jsonify, request, send_file, render_template, abort
 
 import schedule_core as core
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-WORK = os.path.join(HERE, '_work')            # 업로드 원자료와 생성 결과 (세션별 폴더)
+# Vercel 서버리스: /tmp 만 쓸 수 있고 요청마다 다른 인스턴스가 처리할 수 있다.
+# → 결과 엑셀을 응답에 담아 보내고, '작업 폴더에 저장'은 쓰지 않는다.
+CLOUD = bool(os.environ.get('VERCEL'))
+WORK = '/tmp/_work' if CLOUD else os.path.join(HERE, '_work')   # 업로드 원자료와 생성 결과 (세션별 폴더)
 SAVE_DIR = os.path.dirname(HERE)              # '작업 폴더에 저장' 대상 = 원자료가 있는 프로젝트 폴더
 PORT = 5055
 
@@ -76,8 +79,13 @@ def api_build():
     except Exception as e:  # 손상된 파일 등
         return jsonify(error=f'처리 중 오류: {type(e).__name__}: {e}'), 500
     meta['filename'] = res['filename']; _meta(p, meta)
-    res.update(job=job, source_name=meta['source_name'],
-               exists_in_folder=os.path.exists(os.path.join(SAVE_DIR, res['filename'])))
+    res.update(job=job, source_name=meta['source_name'], cloud=CLOUD)
+    if CLOUD:
+        with open(out, 'rb') as fh:
+            res['xlsx_b64'] = base64.b64encode(fh.read()).decode('ascii')
+        shutil.rmtree(p, ignore_errors=True)
+    else:
+        res['exists_in_folder'] = os.path.exists(os.path.join(SAVE_DIR, res['filename']))
     return jsonify(res)
 
 
@@ -90,6 +98,8 @@ def api_download(job):
 @app.post('/api/save/<job>')
 def api_save(job):
     """생성한 명세서를 원자료 폴더(프로젝트 폴더)에 저장. 같은 이름이 있으면 overwrite=1 일 때만 덮어씀"""
+    if CLOUD:
+        abort(404)
     p = _job_dir(job); meta = _meta(p)
     dest = os.path.join(SAVE_DIR, meta['filename'])
     if os.path.exists(dest) and request.args.get('overwrite') != '1':
