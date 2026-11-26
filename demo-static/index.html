@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>선급비용 명세서 생성기 · 전시용 데모</title>
+<meta name="description" content="선급비용 원자료로 월별 비용·월말 잔액·원장 대사 명세서를 만드는 도구의 정적 데모">
+<link rel="icon" href="./assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="./assets/style.css">
+</head>
+<body>
+<div class="simbar">전시용 데모 · 서버 없이 브라우저에서 동작합니다. 모든 데이터는 <b>가짜 샘플</b>이며, 업로드·폴더 저장은 <b>전시용 시뮬레이션</b>입니다.</div>
+<header>
+  <h1>선급비용 명세서 생성기</h1>
+  <p>ERP 원자료 엑셀을 올리면 월별 비용·월말 잔액·원장 대사가 담긴 수식 명세서를 만듭니다. 계산: 분 단위 기간, 기준일 24:00, 잔여비율 소수 5자리 반올림.</p>
+</header>
+<main>
+  <section class="panel intro">
+    <ol class="flow">
+      <li><b>원자료 올리기</b><span>ERP에서 받은 선급비용 엑셀</span></li>
+      <li><b>기준월 고르기</b><span>월말 24:00 시점 잔액</span></li>
+      <li><b>검증 확인</b><span>비용 합계·원장 대사</span></li>
+      <li><b>엑셀 받기</b><span>수식으로 된 명세서</span></li>
+    </ol>
+  </section>
+
+  <section class="panel">
+    <div class="inputs">
+      <div class="drop" id="drop" tabindex="0" role="button" aria-label="원자료 선택 (전시용 시뮬레이션)">
+        <input type="file" id="file" accept=".xlsx,.xlsm" hidden>
+        <div id="dropText"><strong>원자료 엑셀을 끌어 놓거나 클릭해서 선택</strong><br>
+          <span class="sim">전시용 시뮬레이션</span> 올린 파일은 읽지 않고, 아래 샘플 원자료로 계산합니다.</div>
+        <div class="srcline">사용 중인 원자료: <b id="srcName"></b> · <a href="./assets/samples/sample-raw.xlsx" download="선급비용_샘플원자료.xlsx" id="rawLink">샘플 원자료 내려받기</a></div>
+      </div>
+      <div class="side">
+        <label for="month">기준월 (월말 24:00 기준)</label>
+        <input type="month" id="month" min="2025-11" max="2027-05">
+        <span class="hint">비워 두면 결산일자 중 가장 많은 날짜를 씁니다.</span>
+        <button class="primary" id="run">명세서 만들기</button>
+      </div>
+    </div>
+  </section>
+
+  <div id="msgs" aria-live="polite"></div>
+
+  <div id="result" class="hidden">
+    <div class="kpis" id="kpis"></div>
+    <div class="bar">
+      <div class="tabs" id="tabs" role="tablist">
+        <button data-t="month" class="on">월별 추이</button>
+        <button data-t="items">건별 명세</button>
+        <button data-t="matrix">건별 월별 비용</button>
+        <button data-t="balmatrix">건별 월말 잔액</button>
+        <button data-t="ledger">원장 대사</button>
+      </div>
+      <div class="actions">
+        <a id="dl" class="btn primary" href="#">엑셀 다운로드</a>
+        <button id="save">작업 폴더에 저장</button>
+      </div>
+    </div>
+    <div class="tablewrap"><table id="tbl"></table></div>
+    <div class="legend" id="legend"></div>
+  </div>
+</main>
+<footer>정적 데모 · 실제 도구는 로컬 Python(Flask) 서버에서 원자료를 읽고 Excel 수식 파일을 만듭니다. 이 데모의 계산은 같은 규칙을 JavaScript로 옮긴 것입니다.</footer>
+<script src="./assets/sample-data.js"></script>
+<script src="./assets/engine.js"></script>
+<script src="./assets/app.js"></script>
+</body>
+</html>

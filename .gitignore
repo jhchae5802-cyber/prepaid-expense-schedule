@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.pyc
+
+# 웹앱 업로드·결과 임시 파일
+webapp/_work/
+
+# 실제 회계 데이터 (루트의 엑셀 파일) — demo-static 샘플은 포함
+/*.xlsx
+
+# 배포용 압축본
+demo.zip
+
+# 빈 메모 파일
+수정코드.txt
+
+# OS / 편집기
+Thumbs.db
+desktop.ini
+.DS_Store
+~$*
